@@ -7,6 +7,7 @@
         "love"
     ],
     "workspace.library": [
-        "${workspaceFolder}/.cache/luals/love2d/library"
+        "${workspaceFolder}/.cache/luals/love2d/library",
+        "${workspaceFolder}/.cache/deps/push.lua"
     ]
 }

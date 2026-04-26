@@ -22,8 +22,10 @@ Run one command from the project root:
 make init
 ```
 
-This fetches the local editor-only LÖVE type definitions into
-`.cache/luals/love2d`.
+This fetches:
+
+- local editor-only LÖVE type definitions into `.cache/luals/love2d`
+- runtime dependency `.cache/deps/push.lua` from `Ulydev/push` `dev` branch
 
 ## Run the game
 
@@ -38,12 +40,8 @@ love .
 
 ## Make targets
 
-```shell
-make help
-```
-
 Available targets:
 
-- `make init` - bootstrap local project setup
-- `make love-types` - re-fetch the local LÖVE LuaLS cache
-- `make clean-love-types` - remove the local LuaLS cache folder
+- `make init` - fetch all local dependencies
+- `make update` - re-fetch all local dependencies
+- `make clean` - remove all local cached dependencies
