@@ -6,73 +6,122 @@ local push = require("push")
 
 -- Main game table to hold all game-related data and configuration.
 local Game = {
-  fonts = {},
-  config = {
-    -- Real window dimensions.
-    windowWidth = 1280,
-    windowHeight = 720,
+  window = {
+    real = {
+      width = 1280,
+      height = 720,
+    },
 
     -- Virtual window dimensions, for a retro aesthetic.
     -- The actual game will be rendered within this virtual window,
     -- and then scaled up to fit the real window.
     -- 432 / 243 = 16:9, same aspect ratio as 1280 / 720
-    virtualWidth = 432,
-    virtualHeight = 243,
-
-    -- Colors
-    backgroundColor = { r = 0, g = 0, b = 0, a = 1 },
-    textColor = { r = 255, g = 255, b = 255, a = 1 },
-
-    -- Font settings
-    fontPath = "assets/font.ttf",
-    fontSizeLarge = 32,
-    fontSizeSmall = 8,
-
-    -- Layout settings for score display, paddles, and ball.
-    layout = {
-      scoreYFromCenter = 80,
-      scorePlayer1XFromCenter = 50,
-      scorePlayer2XFromCenter = 30,
-
-      paddleWidth = 5,
-      paddleHeight = 20,
-      paddle1X = 10,
-      paddle1Y = 10,
-      paddle2RightMargin = 10,
-      paddle2BottomMargin = 10,
-
-      ballSize = 4,
+    virtual = {
+      width = 432,
+      height = 243,
     },
   },
 
-  -- Initial scores for both players.
-  scores = {
-    player1 = 0,
-    player2 = 0,
+  colors = {
+    background = { r = 0, g = 0, b = 0, a = 1 },
+    draw = { r = 255, g = 255, b = 255, a = 1 },
+  },
+
+  fonts = {
+    path = "assets/font.ttf",
+    size = {
+      large = 32,
+      small = 8,
+    },
+  },
+
+  paddle = {
+    width = 6,
+    height = 20,
+    speed = 200,
+    padding = 13,
+  },
+
+  ball = {
+    size = 4,
+    x = 0,
+    y = 0,
+    speedX = 0,
+    speedY = 0,
+  },
+
+  players = {
+    left = {
+      score = 0,
+      x = 0,
+      y = 0,
+    },
+    right = {
+      score = 0,
+      x = 0,
+      y = 0,
+    },
   },
 }
 
+function Game.draw_grid()
+  love.graphics.setLineStyle("rough")
+
+  local number_of_lines = 7
+
+  local vy1 = 0
+  local vy2 = Game.window.virtual.height
+
+  local hx1 = 0
+  local hx2 = Game.window.virtual.width
+
+  for i = 1, number_of_lines, 1 do
+    local vx1 = Game.window.virtual.width / (number_of_lines + 1) * i
+    local vx2 = vx1
+
+    local hy1 = Game.window.virtual.height / (number_of_lines + 1) * i
+    local hy2 = hy1
+
+    love.graphics.line(vx1, vy1, vx2, vy2)
+    love.graphics.line(hx1, hy1, hx2, hy2)
+  end
+end
+
 function love.load()
-  -- Set the default filter to "nearest" for a pixelated look when scaling.
+  -- Set the default filter to "nearest" for a pixelated look when scaling
   love.graphics.setDefaultFilter("nearest", "nearest")
 
-  -- Set up fonts for the game using the specified font path and sizes.
-  Game.fonts.large =
-    love.graphics.newFont(Game.config.fontPath, Game.config.fontSizeLarge)
-  Game.fonts.small =
-    love.graphics.newFont(Game.config.fontPath, Game.config.fontSizeSmall)
+  -- Set fonts
+  local font_path = Game.fonts.path
+  Game.fonts.large = love.graphics.newFont(font_path, Game.fonts.size.large)
+  Game.fonts.small = love.graphics.newFont(font_path, Game.fonts.size.small)
 
-  -- Set up the window and the virtual resolution using the push library.
-  love.window.setMode(
-    Game.config.windowWidth,
-    Game.config.windowHeight,
-    { fullscreen = false, resizable = false, vsync = true }
-  )
+  -- Set window
+  love.window.setMode(Game.window.real.width, Game.window.real.height, {
+    fullscreen = false,
+    resizable = false,
+    vsync = true,
+  })
+
   push.setupScreen(
-    Game.config.virtualWidth,
-    Game.config.virtualHeight,
+    Game.window.virtual.width,
+    Game.window.virtual.height,
     { upscale = "normal" }
   )
+
+  -- Set the initial ball position
+  Game.ball.x = Game.window.virtual.width / 2 - Game.ball.size / 2
+  Game.ball.y = Game.window.virtual.height / 2 - Game.ball.size / 2
+
+  -- Set the initial left player position
+  Game.players.left.x = Game.paddle.padding - Game.paddle.width / 2
+  Game.players.left.y = Game.window.virtual.height / 2 - Game.paddle.height / 2
+
+  -- Set the initial right player position
+  Game.players.right.x = Game.window.virtual.width
+    - Game.paddle.padding
+    - Game.paddle.width / 2
+  Game.players.right.y = Game.window.virtual.height / 2 - Game.paddle.height / 2
 end
 
 function love.keypressed(key)
@@ -81,87 +130,77 @@ function love.keypressed(key)
   end
 end
 
+function love.update(dt)
+  if love.keyboard.isDown("s") then
+    Game.players.left.y = Game.players.left.y - Game.paddle.speed * dt
+  end
+
+  if love.keyboard.isDown("d") then
+    Game.players.left.y = Game.players.left.y + Game.paddle.speed * dt
+  end
+
+  if love.keyboard.isDown("j") then
+    Game.players.right.y = Game.players.right.y - Game.paddle.speed * dt
+  end
+
+  if love.keyboard.isDown("k") then
+    Game.players.right.y = Game.players.right.y + Game.paddle.speed * dt
+  end
+end
+
 function love.draw()
-  -- Calculate the center of the virtual screen for positioning elements.
-  local centerX = Game.config.virtualWidth / 2
-  local centerY = Game.config.virtualHeight / 2
-
-  -- Calculate the Y position for the score display based on the center of the
-  -- screen and the configured offset.
-  local scoreY = centerY - Game.config.layout.scoreYFromCenter
-
-  -- Calculate the X and Y positions for the second paddle based on the virtual
-  -- screen dimensions and the configured margins.
-  local paddle2X = Game.config.virtualWidth
-    - Game.config.layout.paddle2RightMargin
-    - Game.config.layout.paddleWidth
-  local paddle2Y = Game.config.virtualHeight
-    - Game.config.layout.paddle2BottomMargin
-    - Game.config.layout.paddleHeight
-
-  -- Calculate half the size of the ball for centering it on the screen.
-  local ballHalfSize = Game.config.layout.ballSize / 2
-
   push.start()
 
-  -- Clear the screen with the configured background color.
+  -- Clear the screen to the specified color
   love.graphics.clear(
-    Game.config.backgroundColor.r,
-    Game.config.backgroundColor.g,
-    Game.config.backgroundColor.b,
-    Game.config.backgroundColor.a
+    Game.colors.background.r,
+    Game.colors.background.g,
+    Game.colors.background.b,
+    Game.colors.background.a
   )
 
-  -- Set the drawing color to the configured text color for rendering scores and
-  -- other text elements.
+  -- Set the drawing color
   love.graphics.setColor(
-    Game.config.textColor.r,
-    Game.config.textColor.g,
-    Game.config.textColor.b,
-    Game.config.textColor.a
+    Game.colors.draw.r,
+    Game.colors.draw.g,
+    Game.colors.draw.b,
+    Game.colors.draw.a
   )
 
+  -- Set the font
   love.graphics.setFont(Game.fonts.large)
 
-  -- Player 1 score
-  love.graphics.print(
-    tostring(Game.scores.player1),
-    centerX - Game.config.layout.scorePlayer1XFromCenter,
-    scoreY
-  )
+  Game.draw_grid()
 
-  -- Player 2 score
-  love.graphics.print(
-    tostring(Game.scores.player2),
-    centerX + Game.config.layout.scorePlayer2XFromCenter,
-    scoreY
-  )
+  -- Set the left player
+  love.graphics.print(tostring(Game.players.left.score))
 
-  -- Paddle 1
   love.graphics.rectangle(
     "fill",
-    Game.config.layout.paddle1X,
-    Game.config.layout.paddle1Y,
-    Game.config.layout.paddleWidth,
-    Game.config.layout.paddleHeight
+    Game.players.left.x,
+    Game.players.left.y,
+    Game.paddle.width,
+    Game.paddle.height
   )
 
-  -- Paddle 2
+  -- Set the right player
+  love.graphics.print(tostring(Game.players.right.score))
+
   love.graphics.rectangle(
     "fill",
-    paddle2X,
-    paddle2Y,
-    Game.config.layout.paddleWidth,
-    Game.config.layout.paddleHeight
+    Game.players.right.x,
+    Game.players.right.y,
+    Game.paddle.width,
+    Game.paddle.height
   )
 
-  -- Ball
+  -- Set the ball
   love.graphics.rectangle(
     "fill",
-    centerX - ballHalfSize,
-    centerY - ballHalfSize,
-    Game.config.layout.ballSize,
-    Game.config.layout.ballSize
+    Game.ball.x,
+    Game.ball.y,
+    Game.ball.size,
+    Game.ball.size
   )
 
   push.finish()
