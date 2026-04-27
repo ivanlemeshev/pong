@@ -6,6 +6,8 @@ local push = require("push")
 
 -- Main game table to hold all game-related data and configuration.
 local Game = {
+  state = "start",
+
   window = {
     real = {
       width = 1280,
@@ -46,8 +48,8 @@ local Game = {
     size = 4,
     x = 0,
     y = 0,
-    speedX = 0,
-    speedY = 0,
+    dx = 0,
+    dy = 0,
   },
 
   scores = {
@@ -99,7 +101,14 @@ function Game.draw_grid()
   end
 end
 
+function display_fps()
+  love.graphics.setFont(Game.fonts.small)
+  love.graphics.print("FPS: " .. tostring(love.timer.getFPS()), 10, 10)
+end
+
 function love.load()
+  math.randomseed(os.time())
+
   -- Set the default filter to "nearest" for a pixelated look when scaling
   love.graphics.setDefaultFilter("nearest", "nearest")
 
@@ -124,6 +133,10 @@ function love.load()
   -- Set the initial ball position
   Game.ball.x = Game.window.virtual.width / 2 - Game.ball.size / 2
   Game.ball.y = Game.window.virtual.height / 2 - Game.ball.size / 2
+
+  -- Set the initial ball velocity
+  Game.ball.dx = math.random(2) == 1 and 100 or -100
+  Game.ball.dy = math.random(-50, 50) * 1.5
 
   -- Set the initial left player position
   Game.players.left.x = Game.paddle.padding - Game.paddle.width / 2
@@ -157,23 +170,108 @@ function love.keypressed(key)
   if key == "escape" then
     love.event.quit()
   end
+
+  if key == "space" then
+    if Game.state == "start" then
+      Game.state = "play"
+    else
+      Game.state = "start"
+
+      -- Reset the ball position
+      Game.ball.x = Game.window.virtual.width / 2 - Game.ball.size / 2
+      Game.ball.y = Game.window.virtual.height / 2 - Game.ball.size / 2
+
+      -- Reset the ball velocity
+      Game.ball.dx = math.random(2) == 1 and 100 or -100
+      Game.ball.dy = math.random(-50, 50) * 1.5
+    end
+  end
 end
 
 function love.update(dt)
   if love.keyboard.isDown("s") then
-    Game.players.left.y = Game.players.left.y - Game.paddle.speed * dt
+    Game.players.left.y =
+      math.max(0, Game.players.left.y - Game.paddle.speed * dt)
   end
 
   if love.keyboard.isDown("d") then
-    Game.players.left.y = Game.players.left.y + Game.paddle.speed * dt
+    Game.players.left.y = math.min(
+      Game.window.virtual.height - Game.paddle.height,
+      Game.players.left.y + Game.paddle.speed * dt
+    )
   end
 
   if love.keyboard.isDown("j") then
-    Game.players.right.y = Game.players.right.y - Game.paddle.speed * dt
+    Game.players.right.y =
+      math.max(0, Game.players.right.y - Game.paddle.speed * dt)
   end
 
   if love.keyboard.isDown("k") then
-    Game.players.right.y = Game.players.right.y + Game.paddle.speed * dt
+    Game.players.right.y = math.min(
+      Game.window.virtual.height - Game.paddle.height,
+      Game.players.right.y + Game.paddle.speed * dt
+    )
+  end
+
+  if Game.state == "play" then
+    local is_ball_colliding_with_left_paddle = Game.ball.x
+        <= Game.players.left.x + Game.paddle.width
+      and Game.ball.y + Game.ball.size >= Game.players.left.y
+      and Game.ball.y <= Game.players.left.y + Game.paddle.height
+
+    local is_ball_colliding_with_right_paddle = Game.ball.x + Game.ball.size
+        >= Game.players.right.x
+      and Game.ball.y + Game.ball.size >= Game.players.right.y
+      and Game.ball.y <= Game.players.right.y + Game.paddle.height
+
+    if is_ball_colliding_with_left_paddle then
+      Game.ball.dx = -Game.ball.dx * 1.03
+      Game.ball.x = Game.players.left.x + Game.ball.size
+
+      if Game.ball.dy < 0 then
+        Game.ball.dy = -math.random(10, 150)
+      else
+        Game.ball.dy = math.random(10, 150)
+      end
+    elseif is_ball_colliding_with_right_paddle then
+      Game.ball.dx = -Game.ball.dx * 1.03
+      Game.ball.x = Game.players.right.x - Game.ball.size
+
+      if Game.ball.dy < 0 then
+        Game.ball.dy = -math.random(10, 150)
+      else
+        Game.ball.dy = math.random(10, 150)
+      end
+    end
+
+    if Game.ball.y <= 0 then
+      Game.ball.y = 0
+      Game.ball.dy = -Game.ball.dy
+    end
+
+    if Game.ball.y >= Game.window.virtual.height - Game.ball.size then
+      Game.ball.y = Game.window.virtual.height - Game.ball.size
+      Game.ball.dy = -Game.ball.dy
+    end
+
+    if Game.ball.x < 0 then
+      Game.players.right.score = Game.players.right.score + 1
+      Game.state = "start"
+      Game.ball.x = Game.window.virtual.width / 2 - Game.ball.size / 2
+      Game.ball.y = Game.window.virtual.height / 2 - Game.ball.size / 2
+      Game.ball.dx = math.random(2) == 1 and 100 or -100
+      Game.ball.dy = math.random(-50, 50) * 1.5
+    elseif Game.ball.x > Game.window.virtual.width then
+      Game.players.left.score = Game.players.left.score + 1
+      Game.state = "start"
+      Game.ball.x = Game.window.virtual.width / 2 - Game.ball.size / 2
+      Game.ball.y = Game.window.virtual.height / 2 - Game.ball.size / 2
+      Game.ball.dx = math.random(2) == 1 and 100 or -100
+      Game.ball.dy = math.random(-50, 50) * 1.5
+    end
+
+    Game.ball.x = Game.ball.x + Game.ball.dx * dt
+    Game.ball.y = Game.ball.y + Game.ball.dy * dt
   end
 end
 
@@ -239,6 +337,8 @@ function love.draw()
     Game.ball.size,
     Game.ball.size
   )
+
+  display_fps()
 
   push.finish()
 end
