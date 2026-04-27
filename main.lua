@@ -50,6 +50,18 @@ local Game = {
     speedY = 0,
   },
 
+  scores = {
+    left = {
+      x = 0,
+      y = 0,
+    },
+
+    right = {
+      x = 0,
+      y = 0,
+    },
+  },
+
   players = {
     left = {
       score = 0,
@@ -122,6 +134,23 @@ function love.load()
     - Game.paddle.padding
     - Game.paddle.width / 2
   Game.players.right.y = Game.window.virtual.height / 2 - Game.paddle.height / 2
+
+  -- Set the left score poition
+  Game.scores.left.x = Game.window.virtual.width / 4
+    - Game.fonts.size.large / 2
+    + 8
+  Game.scores.left.y = Game.window.virtual.height / 4
+    - Game.fonts.size.large / 2
+    + 2
+
+  -- Set the right score position
+  Game.scores.right.x = Game.window.virtual.width
+    - Game.window.virtual.width / 4
+    - Game.fonts.size.large / 2
+    + 8
+  Game.scores.right.y = Game.window.virtual.height / 4
+    - Game.fonts.size.large / 2
+    + 2
 end
 
 function love.keypressed(key)
@@ -170,10 +199,14 @@ function love.draw()
   -- Set the font
   love.graphics.setFont(Game.fonts.large)
 
-  Game.draw_grid()
+  -- Game.draw_grid()
 
   -- Set the left player
-  love.graphics.print(tostring(Game.players.left.score))
+  love.graphics.print(
+    tostring(Game.players.left.score),
+    Game.scores.left.x,
+    Game.scores.left.y
+  )
 
   love.graphics.rectangle(
     "fill",
@@ -184,7 +217,11 @@ function love.draw()
   )
 
   -- Set the right player
-  love.graphics.print(tostring(Game.players.right.score))
+  love.graphics.print(
+    tostring(Game.players.right.score),
+    Game.scores.right.x,
+    Game.scores.right.y
+  )
 
   love.graphics.rectangle(
     "fill",
