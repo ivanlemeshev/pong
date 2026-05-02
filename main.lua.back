@@ -1,9 +1,3 @@
--- Load dependencies from the .cache/deps directory.
-package.path = table.concat({ "./.cache/deps/?.lua", package.path }, ";")
-
--- Load the push library for virtual resolution handling.
-local push = require("push")
-
 -- Main game table to hold all game-related data and configuration.
 local Game = {
   state = "start",

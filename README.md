@@ -25,7 +25,6 @@ make init
 This fetches:
 
 - local editor-only LÖVE type definitions into `.cache/luals/love2d`
-- runtime dependency `.cache/deps/push.lua` from `Ulydev/push` `dev` branch
 
 ## Run the game
 
