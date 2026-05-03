@@ -1,27 +1,32 @@
+local Debug = require("src.core.debug")
 local PlayState = require("src.states.play")
 local Settings = require("src.config.settings")
 local StateManager = require("src.core.state_manager")
 local Viewport = require("src.core.viewport")
 
 ---@class Game
+---@field debug Debug
 ---@field state_manager StateManager
+---@field viewport Viewport
 local Game = {}
 
 ---@return Game
 function Game:init()
   love.graphics.setDefaultFilter("nearest", "nearest")
 
-  self.state_manager = StateManager:new()
-  self.viewport = Viewport.new(Settings.virtual_width, Settings.virtual_height)
+  local viewport_width = love.graphics.getWidth() / 3
+  local viewport_height = love.graphics.getHeight() / 3
 
-  local play_state = PlayState.new(
-    Settings.virtual_width,
-    Settings.virtual_height,
-    Settings.ball_size
-  )
+  self.debug = Debug.new(Settings.debug_mode, viewport_width, viewport_height)
+  self.state_manager = StateManager:new()
+  self.viewport = Viewport.new(viewport_width, viewport_height)
+
+  local play_state =
+    PlayState.new(viewport_width, viewport_height, Settings.ball_size)
 
   self.state_manager:register("play", play_state)
   self.state_manager:change("play")
+
   return self
 end
 
@@ -33,14 +38,11 @@ end
 
 ---@return nil
 function Game:draw()
-  self.viewport:start()
-
   love.graphics.clear(0, 0, 0, 1)
 
+  self.viewport:start()
+  self.debug:draw()
   self.state_manager:draw()
-
-  love.graphics.print("FPS: " .. love.timer.getFPS(), 10, 10)
-
   self.viewport:finish()
 end
 
