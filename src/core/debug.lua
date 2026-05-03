@@ -1,14 +1,17 @@
 ---@class Debug
 ---@field debug_mode boolean
+---@field font love.Font
 ---@field viewport_width number
 ---@field viewport_height number
 local Debug = {}
 
 ---@return Debug
 ---@param debug_mode boolean
-function Debug.new(debug_mode, viewport_width, viewport_height)
+---@param font love.Font
+function Debug.new(debug_mode, font, viewport_width, viewport_height)
   local self = setmetatable({}, { __index = Debug })
   self.debug_mode = debug_mode
+  self.font = font
   self.viewport_width = viewport_width
   self.viewport_height = viewport_height
   return self
@@ -18,16 +21,19 @@ end
 function Debug:draw()
   if self.debug_mode then
     self:draw_grid()
-    self:draw_fsp()
+    self:draw_fps()
   end
 end
 
-function Debug:draw_fsp()
+function Debug:draw_fps()
+  love.graphics.setFont(self.font)
+  love.graphics.setColor(0, 1, 0, 1)
   love.graphics.print("FPS: " .. love.timer.getFPS(), 0, 0)
 end
 
 function Debug:draw_grid()
   love.graphics.setLineStyle("rough")
+  love.graphics.setColor(0.5, 0.5, 0.5, 1)
 
   local number_of_lines = 7
 
