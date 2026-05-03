@@ -16,3 +16,9 @@ end
 function love.draw()
   Game:draw()
 end
+
+---@param key string
+---@return nil
+function love.keypressed(key)
+  Game:keypressed(key)
+end

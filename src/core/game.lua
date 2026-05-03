@@ -1,6 +1,8 @@
 local Debug = require("src.core.debug")
+local PauseState = require("src.states.pause")
 local PlayState = require("src.states.play")
 local Settings = require("src.config.settings")
+local StartState = require("src.states.start")
 local StateManager = require("src.core.state_manager")
 local Viewport = require("src.core.viewport")
 
@@ -21,11 +23,23 @@ function Game:init()
   self.state_manager = StateManager:new()
   self.viewport = Viewport.new(viewport_width, viewport_height)
 
-  local play_state =
-    PlayState.new(viewport_width, viewport_height, Settings.ball_size)
+  local start_state =
+    StartState.new(self.state_manager, viewport_width, viewport_height)
 
+  local play_state = PlayState.new(
+    self.state_manager,
+    viewport_width,
+    viewport_height,
+    Settings.ball_size
+  )
+
+  local pause_state =
+    PauseState.new(self.state_manager, viewport_width, viewport_height)
+
+  self.state_manager:register("start", start_state)
   self.state_manager:register("play", play_state)
-  self.state_manager:change("play")
+  self.state_manager:register("pause", pause_state)
+  self.state_manager:change("start")
 
   return self
 end
@@ -44,6 +58,17 @@ function Game:draw()
   self.debug:draw()
   self.state_manager:draw()
   self.viewport:finish()
+end
+
+---@param key string
+---@return nil
+function Game:keypressed(key)
+  if key == "escape" then
+    love.event.quit()
+    return
+  end
+
+  self.state_manager:keypressed(key)
 end
 
 return Game

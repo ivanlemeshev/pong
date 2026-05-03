@@ -4,7 +4,7 @@
 ---@field y number
 ---@field dx number
 ---@field dy number
----@field reset fun(self: Ball, world_width: number, world_height: number): nil
+---@field reset fun(self: Ball, viewport_width: number, viewport_height: number): nil
 ---@field update fun(self: Ball, dt: number): nil
 ---@field draw fun(self: Ball): nil
 local Ball = {}

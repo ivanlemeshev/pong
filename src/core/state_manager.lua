@@ -2,6 +2,7 @@
 ---@field enter fun(self: State): nil
 ---@field update fun(self: State, dt: number): nil
 ---@field draw fun(self: State): nil
+---@field keypressed fun(self: State, key: string): nil
 
 ---@class StateManager
 ---@field current State|nil
@@ -44,6 +45,14 @@ end
 function StateManager:draw()
   if self.current then
     self.current:draw()
+  end
+end
+
+---@param key string
+---@return nil
+function StateManager:keypressed(key)
+  if self.current then
+    self.current:keypressed(key)
   end
 end
 
