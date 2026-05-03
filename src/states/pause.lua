@@ -1,23 +1,23 @@
+local Input = require("src.systems.input")
+
 ---@class PauseState: State
+---@field context GameContext
 ---@field state_manager StateManager
----@field viewport_width number
----@field viewport_height number
 local PauseState = {}
 
----@param state_manager StateManager
----@param viewport_width number
----@param viewport_height number
+---@param context GameContext
 ---@return PauseState
-function PauseState.new(state_manager, viewport_width, viewport_height)
+function PauseState.new(context)
   local self = setmetatable({}, { __index = PauseState })
-  self.state_manager = state_manager
-  self.viewport_width = viewport_width
-  self.viewport_height = viewport_height
+  self.context = context
+  self.state_manager = context.state_manager
   return self
 end
 
+---@param previous_state string|nil
+---@param context table|nil
 ---@return nil
-function PauseState:enter() end
+function PauseState:enter(previous_state, context) end
 
 ---@param dt number
 ---@return nil
@@ -26,17 +26,17 @@ function PauseState:update(dt) end
 ---@return nil
 function PauseState:draw()
   love.graphics.printf(
-    "PAUSED",
+    self.context.text.pause_title,
     0,
-    self.viewport_height / 2 - 24,
-    self.viewport_width,
+    self.context.viewport_height / 2 - 24,
+    self.context.viewport_width,
     "center"
   )
   love.graphics.printf(
-    "Press Space",
+    self.context.text.pause_prompt,
     0,
-    self.viewport_height / 2 + 4,
-    self.viewport_width,
+    self.context.viewport_height / 2 + 4,
+    self.context.viewport_width,
     "center"
   )
 end
@@ -44,7 +44,7 @@ end
 ---@param key string
 ---@return nil
 function PauseState:keypressed(key)
-  if key == "space" then
+  if Input.is_pause_key(key) then
     self.state_manager:change("play")
   end
 end

@@ -1,16 +1,23 @@
 local Debug = require("src.core.debug")
+local DebugConfig = require("src.config.debug")
+local Context = require("src.core.context")
+local Display = require("src.config.display")
 local GameOverState = require("src.states.game_over")
+local Gameplay = require("src.config.gameplay")
+local Palette = require("src.config.palette")
+local Text = require("src.config.text")
 local PauseState = require("src.states.pause")
 local PlayState = require("src.states.play")
-local Settings = require("src.config.settings")
 local StartState = require("src.states.start")
 local StateManager = require("src.core.state_manager")
+local Ui = require("src.config.ui")
 local Viewport = require("src.core.viewport")
 
 ---@class Game
 ---@field debug Debug
----@field font love.Font
----@field debug_font love.Font
+---@field font any
+---@field debug_font any
+---@field context GameContext
 ---@field state_manager StateManager
 ---@field viewport Viewport
 local Game = {}
@@ -18,33 +25,35 @@ local Game = {}
 ---@return Game
 function Game:init()
   love.graphics.setDefaultFilter("nearest", "nearest")
-  self.font = love.graphics.newFont(Settings.font_path, Settings.score_font_size)
-  self.debug_font =
-    love.graphics.newFont(Settings.font_path, Settings.debug_font_size)
+
+  self.font = love.graphics.newFont(Ui.font_path, Ui.score_font_size)
+  self.debug_font = love.graphics.newFont(Ui.font_path, Ui.debug_font_size)
   love.graphics.setFont(self.font)
 
-  local viewport_width = love.graphics.getWidth() / 3
-  local viewport_height = love.graphics.getHeight() / 3
-
-  self.debug =
-    Debug.new(Settings.debug_mode, self.debug_font, viewport_width, viewport_height)
   self.state_manager = StateManager:new()
-  self.viewport = Viewport.new(viewport_width, viewport_height)
+  self.viewport = Viewport.new(Display.virtual_width, Display.virtual_height)
+  self.context = Context.new({
+    state_manager = self.state_manager,
+    viewport_width = Display.virtual_width,
+    viewport_height = Display.virtual_height,
+    gameplay = Gameplay,
+    text = Text,
+    ui = Ui,
+    palette = Palette,
+    debug_enabled = DebugConfig.enabled,
+    font = self.font,
+    debug_font = self.debug_font,
+  })
 
-  local start_state =
-    StartState.new(self.state_manager, viewport_width, viewport_height)
+  self.debug = Debug.new(self.context)
 
-  local play_state = PlayState.new(
-    self.state_manager,
-    viewport_width,
-    viewport_height,
-    Settings.ball_size
+  local start_state = StartState.new(self.context)
+  local play_state = PlayState.new(self.context)
+  local pause_state = PauseState.new(self.context)
+  local game_over_state = GameOverState.new(
+    self.context,
+    self.context.text.game_over_default
   )
-
-  local pause_state =
-    PauseState.new(self.state_manager, viewport_width, viewport_height)
-  local game_over_state =
-    GameOverState.new(self.state_manager, viewport_width, viewport_height, "Game Over")
 
   self.state_manager:register("start", start_state)
   self.state_manager:register("play", play_state)
@@ -63,13 +72,13 @@ end
 
 ---@return nil
 function Game:draw()
-  love.graphics.clear(0, 0, 0, 1)
+  love.graphics.clear(self.context.palette.background)
 
   self.viewport:start()
   love.graphics.setFont(self.font)
   self.debug:draw()
   love.graphics.setFont(self.font)
-  love.graphics.setColor(1, 1, 1, 1)
+  love.graphics.setColor(self.context.palette.foreground)
   self.state_manager:draw()
   self.viewport:finish()
 end

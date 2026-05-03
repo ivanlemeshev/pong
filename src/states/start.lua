@@ -1,23 +1,23 @@
+local Input = require("src.systems.input")
+
 ---@class StartState: State
+---@field context GameContext
 ---@field state_manager StateManager
----@field viewport_width number
----@field viewport_height number
 local StartState = {}
 
----@param state_manager StateManager
----@param viewport_width number
----@param viewport_height number
+---@param context GameContext
 ---@return StartState
-function StartState.new(state_manager, viewport_width, viewport_height)
+function StartState.new(context)
   local self = setmetatable({}, { __index = StartState })
-  self.state_manager = state_manager
-  self.viewport_width = viewport_width
-  self.viewport_height = viewport_height
+  self.context = context
+  self.state_manager = context.state_manager
   return self
 end
 
+---@param previous_state string|nil
+---@param context table|nil
 ---@return nil
-function StartState:enter() end
+function StartState:enter(previous_state, context) end
 
 ---@param dt number
 ---@return nil
@@ -26,17 +26,17 @@ function StartState:update(dt) end
 ---@return nil
 function StartState:draw()
   love.graphics.printf(
-    "PONG",
+    self.context.text.title,
     0,
-    self.viewport_height / 2 - 24,
-    self.viewport_width,
+    self.context.viewport_height / 2 - 24,
+    self.context.viewport_width,
     "center"
   )
   love.graphics.printf(
-    "Press Enter",
+    self.context.text.start_prompt,
     0,
-    self.viewport_height / 2 + 4,
-    self.viewport_width,
+    self.context.viewport_height / 2 + 4,
+    self.context.viewport_width,
     "center"
   )
 end
@@ -44,10 +44,7 @@ end
 ---@param key string
 ---@return nil
 function StartState:keypressed(key)
-  if key == "return" or key == "kpenter" then
-    local play_state = self.state_manager.states.play
-    ---@cast play_state PlayState
-    play_state:start()
+  if Input.is_start_key(key) then
     self.state_manager:change("play")
   end
 end

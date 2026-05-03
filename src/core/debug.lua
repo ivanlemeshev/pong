@@ -1,19 +1,16 @@
 ---@class Debug
+---@field context GameContext
 ---@field debug_mode boolean
----@field font love.Font
----@field viewport_width number
----@field viewport_height number
+---@field font any
 local Debug = {}
 
 ---@return Debug
----@param debug_mode boolean
----@param font love.Font
-function Debug.new(debug_mode, font, viewport_width, viewport_height)
+---@param context GameContext
+function Debug.new(context)
   local self = setmetatable({}, { __index = Debug })
-  self.debug_mode = debug_mode
-  self.font = font
-  self.viewport_width = viewport_width
-  self.viewport_height = viewport_height
+  self.context = context
+  self.debug_mode = context.debug_enabled
+  self.font = context.debug_font
   return self
 end
 
@@ -27,27 +24,27 @@ end
 
 function Debug:draw_fps()
   love.graphics.setFont(self.font)
-  love.graphics.setColor(0, 1, 0, 1)
+  love.graphics.setColor(self.context.palette.fps)
   love.graphics.print("FPS: " .. love.timer.getFPS(), 0, 0)
 end
 
 function Debug:draw_grid()
   love.graphics.setLineStyle("rough")
-  love.graphics.setColor(0.5, 0.5, 0.5, 1)
+  love.graphics.setColor(self.context.palette.grid)
 
   local number_of_lines = 7
 
   local vy1 = 0
-  local vy2 = self.viewport_height
+  local vy2 = self.context.viewport_height
 
   local hx1 = 0
-  local hx2 = self.viewport_width
+  local hx2 = self.context.viewport_width
 
   for i = 1, number_of_lines, 1 do
-    local vx1 = self.viewport_width / (number_of_lines + 1) * i
+    local vx1 = self.context.viewport_width / (number_of_lines + 1) * i
     local vx2 = vx1
 
-    local hy1 = self.viewport_height / (number_of_lines + 1) * i
+    local hy1 = self.context.viewport_height / (number_of_lines + 1) * i
     local hy2 = hy1
 
     love.graphics.line(vx1, vy1, vx2, vy2)
