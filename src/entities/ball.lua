@@ -34,13 +34,13 @@ function Ball.new(size)
   return self
 end
 
----@param world_width number
----@param world_height number
+---@param viewport_width number
+---@param viewport_height number
 ---@return nil
-function Ball:reset(world_width, world_height)
-  -- Start in the middle of the world.
-  self.x = world_width / 2 - self.size / 2
-  self.y = world_height / 2 - self.size / 2
+function Ball:reset(viewport_width, viewport_height)
+  -- Start in the middle of the viewport.
+  self.x = viewport_width / 2 - self.size / 2
+  self.y = viewport_height / 2 - self.size / 2
 
   -- Randomly choose the horizontal direction and speed.
   self.dx = (math.random(INITIAL_DIRECTION_CHOICES) == 1 and 1 or -1)
