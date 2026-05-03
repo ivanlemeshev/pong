@@ -5,7 +5,7 @@ LOVE_TYPES_REPO := https://github.com/LuaCATS/love2d.git
 
 CACHE_DIR := .cache
 
-.PHONY: init update clean
+.PHONY: init update clean run
 
 init:
 	@$(POWERSHELL) "$$typesDir = '$(LOVE_TYPES_DIR)'; if (Test-Path $$typesDir) { Remove-Item -Recurse -Force $$typesDir }"
@@ -13,6 +13,9 @@ init:
 	@$(POWERSHELL) "$$typesDir = '$(LOVE_TYPES_DIR)'; Remove-Item -Recurse -Force (Join-Path $$typesDir '.git')"
 
 update: init
+
+run:
+	@love .
 
 clean:
 	@$(POWERSHELL) "$$dir = '$(CACHE_DIR)'; if (Test-Path $$dir) { Remove-Item -Recurse -Force $$dir }; exit 0"
